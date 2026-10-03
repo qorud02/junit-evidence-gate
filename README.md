@@ -28,7 +28,7 @@ python -m pip install .
 junit-evidence-gate "reports/**/*.xml" --min-executed 20 --max-skipped 2
 ```
 
-Quote glob patterns so expansion behaves consistently across shells. Every supplied path or pattern must match a readable report. Repeating the same file path reads that file once.
+Existing literal paths take priority over glob expansion, including filenames containing brackets or other pattern characters. Quote glob patterns so expansion behaves consistently across shells. Every supplied path or pattern must match a readable report. Repeating the same file path reads that file once.
 
 ## What the gate checks
 
