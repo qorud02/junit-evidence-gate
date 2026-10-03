@@ -109,3 +109,31 @@ raise SystemExit(report.exit_code)
 - [pytest JUnit XML output](https://docs.pytest.org/en/stable/how-to/output.html#creating-junitxml-format-files) produces reports from pytest. This CLI reads reports produced by pytest and other compatible runners.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for focused contributions and reproducible fixture requirements.
+
+## Container and wheel
+
+The Linux amd64 image includes Python 3.12 and the gate. From this repository directory, run a fixture without installing Python:
+
+```sh
+docker run --rm --platform linux/amd64 --network none --read-only --mount "type=bind,source=${PWD},target=/work,readonly" ghcr.io/qorud02/junit-evidence-gate:0.1.0 /work/examples/green.xml --min-executed 2 --max-skipped 1
+```
+
+Use the same command in PowerShell with Docker Desktop configured for Linux containers. It exits 0 and reports two executed testcase records and one skip. Replace green.xml with contradictory.xml to reject an inflated declared total with exit 1.
+
+Check your own report by mounting its directory:
+
+```sh
+docker run --rm --platform linux/amd64 --network none --read-only --mount "type=bind,source=${PWD},target=/work,readonly" ghcr.io/qorud02/junit-evidence-gate:0.1.0 /work/report.xml --min-executed 20 --max-skipped 2 --format markdown
+```
+
+The gate reads report files and quoted globs; each path must exist inside the container. It runs as UID 10001. Keep mounted files readable by that user. Reports are summarized on stdout, so the mounted source stays read-only.
+
+Download junit_evidence_gate-0.1.0-py3-none-any.whl and SHA256SUMS from the [release](https://github.com/qorud02/junit-evidence-gate/releases/tag/v0.1.0), then install:
+
+```sh
+python -m pip install --no-index --no-deps ./junit_evidence_gate-0.1.0-py3-none-any.whl
+junit-evidence-gate --version
+junit-evidence-gate report.xml --min-executed 20 --max-skipped 2
+```
+
+The wheel supports Python 3.10 or newer and has no runtime dependencies. The [package workflow](.github/workflows/package.yml) verifies the container and a fresh wheel installation before pushing the image. Versioned image tags and the release checksum identify the artifacts.
