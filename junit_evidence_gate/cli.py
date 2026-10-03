@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     paths: list[str] = []
     unmatched: list[str] = []
     for pattern in args.reports:
-        if not glob.has_magic(pattern) and Path(pattern).exists():
+        if Path(pattern).exists():
             paths.append(pattern)
             continue
         matches = sorted(glob.glob(pattern, recursive=True))
