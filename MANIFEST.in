@@ -1,0 +1,4 @@
+graft examples
+graft docs
+include CONTRIBUTING.md
+include scripts/verify_distribution.py
