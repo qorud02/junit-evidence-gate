@@ -1,0 +1,4 @@
+<testsuite name="unit" tests="2" failures="1" errors="1" skipped="0">
+  <testcase classname="renderer" name="literal_output"><failure message="Expected literal text"/></testcase>
+  <testcase classname="parser" name="loads_file"><error message="Fixture unavailable"/></testcase>
+</testsuite>

@@ -2,13 +2,11 @@
 
 Reject a green CI report when its testcase records are empty, duplicated, contradictory, or failing.
 
-```text
-$ python -m junit_evidence_gate examples/contradictory.xml --format markdown
-JUnit evidence: REJECT
-records: 1   unique: 1   executed: 1
-testsuite inflated declares tests=39; observed 1
-exit code: 1
+```sh
+python -m junit_evidence_gate examples/contradictory.xml --format markdown
 ```
+
+This fixture declares 39 tests and contains one testcase. The gate returns exit code `1` and reports `testsuite inflated declares tests=39; observed 1`.
 
 The small CLI counts testcase records, compares them with declared suite totals, and applies an execution minimum and optional skip budget. It runs offline with Python 3.10+ and has no runtime dependencies.
 

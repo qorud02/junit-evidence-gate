@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="3" failures="0" errors="0" skipped="1">
+  <testsuite name="unit" tests="3" failures="0" errors="0" skipped="1">
+    <testcase classname="parser" name="preserves_identifiers" time="0.001"/>
+    <testcase classname="renderer" name="literal_markdown" time="0.002"/>
+    <testcase classname="network" name="live_integration"><skipped message="Requires opt-in network access"/></testcase>
+  </testsuite>
+</testsuites>

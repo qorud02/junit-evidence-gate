@@ -1,0 +1,3 @@
+<testsuite name="&lt;script&gt; &amp; *suite*" tests="1">
+  <testcase classname="class|name" name="**bold** _em_ [link](https://example.com) `code` &lt;img&gt; | &#10;second line"/>
+</testsuite>

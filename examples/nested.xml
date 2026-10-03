@@ -1,0 +1,9 @@
+<testsuites tests="3" failures="0" errors="0" skipped="0">
+  <testsuite name="all" tests="3">
+    <testcase classname="root" name="direct"/>
+    <testsuite name="parser" tests="2">
+      <testcase classname="csv" name="empty"/>
+      <testcase classname="csv" name="quoted"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "junit-evidence-gate"
+version = "0.1.0"
+description = "Check JUnit testcase evidence before accepting a green CI report."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "qorud02"}]
+keywords = ["junit", "ci", "testing", "validation"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Testing",
+]
+
+[project.scripts]
+junit-evidence-gate = "junit_evidence_gate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["junit_evidence_gate*"]

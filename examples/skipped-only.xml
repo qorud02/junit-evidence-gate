@@ -1,0 +1,4 @@
+<testsuite name="integration" tests="2" failures="0" errors="0" skipped="2">
+  <testcase classname="api" name="create"><skipped/></testcase>
+  <testcase classname="api" name="update"><skipped/></testcase>
+</testsuite>

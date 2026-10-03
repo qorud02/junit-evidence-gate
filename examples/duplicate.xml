@@ -1,0 +1,4 @@
+<testsuite name="unit" tests="2">
+  <testcase classname="parse" name="same_identity"/>
+  <testcase classname="parse" name="same_identity"/>
+</testsuite>
