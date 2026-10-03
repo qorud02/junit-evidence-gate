@@ -4,6 +4,7 @@ import html
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import tomllib
@@ -22,13 +23,24 @@ clean_env = {key: value for key, value in os.environ.items() if key not in {"PYT
 checks = []
 
 with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
-    temp = Path(directory)
+    temp = Path(directory).resolve()
+    assert temp.parent == Path(tempfile.gettempdir()).resolve()
+    assert temp.name.startswith("junit-package-smoke-")
     temp.chmod(0o755)
+    injection_name = "github-👋,%0A-case.xml"
+    injection_case = "한글 👋\r\n::error::forged%0A"
+    injection_suite = "suite 👋\n::notice::suite"
     payloads = {
         "malformed.xml": b"<testsuite>",
         "dtd-utf8.xml": b'<!DOCTYPE testsuite [<!ENTITY x "expanded">]><testsuite><testcase name="&x;"/></testsuite>',
         "dtd-utf16.xml": '<!DOCTYPE testsuite [<!ENTITY x "expanded">]><testsuite><testcase name="&x;"/></testsuite>'.encode("utf-16"),
         "external.xml": b'<!DOCTYPE testsuite SYSTEM "file:///tmp/probe-secret"><testsuite><testcase name="a"/></testsuite>',
+        injection_name: (
+            '<testsuite name="suite 👋&#10;::notice::suite">'
+            '<testcase name="한글 👋&#13;&#10;::error::forged%0A"/>'
+            '<testcase name="한글 👋&#13;&#10;::error::forged%0A"/>'
+            '</testsuite>'
+        ).encode("utf-8"),
     }
     for name, payload in payloads.items():
         (temp / name).write_bytes(payload)
@@ -48,12 +60,39 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
         fixture = lambda name: str(root / "examples" / name)
         extra = lambda name: str(temp / name)
 
-    def run(arguments, expected, label, report=True):
-        result = subprocess.run(prefix + arguments, cwd=temp, env=clean_env,
+    def run(arguments, expected, label, report=True, github=False):
+        command_prefix = prefix
+        command_env = clean_env
+        if github:
+            command_env = dict(clean_env, PYTHONIOENCODING="cp949")
+            if args.container:
+                command_prefix = base + ["--env", "PYTHONIOENCODING=cp949", args.container]
+        result = subprocess.run(command_prefix + arguments, cwd=temp, env=command_env,
                                 capture_output=True, text=True, encoding="utf-8", timeout=180)
         assert result.returncode == expected, (label, expected, result.returncode, result.stdout, result.stderr)
+        if github:
+            assert result.stderr == "", (label, result.stderr)
         checks.append(label)
         return json.loads(result.stdout) if report else result.stdout
+
+    def commands(content):
+        # Parse physical command boundaries before decoding, as Actions does.
+        assert content.endswith("\n") and "\r" not in content, content
+        parsed = []
+        for line in content[:-1].split("\n"):
+            match = re.fullmatch(r"::(error|notice) ([^:\r\n]*)::([^\r\n]*)", line)
+            assert match is not None, line
+            level, raw_properties, raw_message = match.groups()
+            properties = {}
+            for item in raw_properties.split(","):
+                key, value = item.split("=", 1)
+                assert key in {"title", "file"} and key not in properties, item
+                replacements = {"25": "%", "0D": "\r", "0A": "\n", "3A": ":", "2C": ","}
+                properties[key] = re.sub(r"%(25|0D|0A|3A|2C)", lambda token: replacements[token[1]], value)
+            replacements = {"25": "%", "0D": "\r", "0A": "\n"}
+            message = re.sub(r"%(25|0D|0A)", lambda token: replacements[token[1]], raw_message)
+            parsed.append((level, properties, message))
+        return parsed
 
     assert run(["--version"], 0, "console-version", False).strip() == version
     green = run([fixture("green.xml"), "--min-executed", "2", "--max-skipped", "1"], 0, "valid-report")
@@ -76,6 +115,52 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
     assert cells == [" / ".join(original["suite"]), original["classname"], original["name"], original["status"]], cells
     run([fixture("green.xml"), "--max-bytes", "1"], 2, "bounded-input")
     run([fixture("green.xml"), "--min-executed", "-1"], 2, "invalid-policy", False)
+
+    github_green = commands(run([fixture("green.xml"), "--format", "github"], 0,
+                                "github-success-under-legacy-encoding", False, github=True))
+    assert github_green == [("notice", {"title": "JUnit evidence: PASS"},
+                             "2 executed; 2 passed; 0 failed; 0 errors; 1 skipped; 3 unique of 3 records; exit 0")]
+    github_rejection = commands(run([fixture("contradictory.xml"), "--format", "github"], 1,
+                                    "github-rejection-counts-and-source", False, github=True))
+    assert github_rejection == [
+        ("error", {"title": "JUnit evidence: evidence.count_mismatch", "file": fixture("contradictory.xml")},
+         "testsuite inflated declares tests=39; observed 1"),
+        ("notice", {"title": "JUnit evidence: REJECT"},
+         "1 executed; 1 passed; 0 failed; 0 errors; 0 skipped; 1 unique of 1 records; exit 1"),
+    ]
+    github_malformed = commands(run([extra("malformed.xml"), "--format", "github"], 2,
+                                    "github-input-error-counts-and-source", False, github=True))
+    assert github_malformed == [
+        ("error", {"title": "JUnit evidence: input.invalid_xml", "file": extra("malformed.xml")},
+         "Malformed or unsupported XML encoding"),
+        ("error", {"title": "JUnit evidence: policy.zero_executed"},
+         "No non-skipped testcase evidence was recorded"),
+        ("notice", {"title": "JUnit evidence: REJECT"},
+         "0 executed; 0 passed; 0 failed; 0 errors; 0 skipped; 0 unique of 0 records; exit 2"),
+    ]
+    unsafe_commands = run([extra(injection_name), "--format", "github"], 1,
+                          "github-unicode-xml-command-boundary", False, github=True)
+    assert "한글 👋%0D%0A::error::forged%250A" in unsafe_commands, unsafe_commands
+    assert "github-👋%2C%250A-case.xml" in unsafe_commands, unsafe_commands
+    assert commands(unsafe_commands) == [
+        ("error", {"title": "JUnit evidence: evidence.duplicate", "file": extra(injection_name)},
+         "Repeated testcase identity: ::" + injection_case + " in " + injection_suite),
+        ("notice", {"title": "JUnit evidence: REJECT"},
+         "1 executed; 1 passed; 0 failed; 0 errors; 0 skipped; 1 unique of 2 records; exit 1"),
+    ]
+    missing_name = "missing:👋,%0A.xml"
+    unmatched = run([missing_name, "--format", "github"], 2,
+                    "github-unmatched-path-property-escaping", False, github=True)
+    assert "file=missing%3A👋%2C%250A.xml" in unmatched, unmatched
+    assert commands(unmatched) == [
+        ("error", {"title": "JUnit evidence: input.missing"}, "No report files supplied"),
+        ("error", {"title": "JUnit evidence: policy.zero_executed"},
+         "No non-skipped testcase evidence was recorded"),
+        ("error", {"title": "JUnit evidence: input.unmatched", "file": missing_name},
+         "Path or glob pattern matched no files"),
+        ("notice", {"title": "JUnit evidence: REJECT"},
+         "0 executed; 0 passed; 0 failed; 0 errors; 0 skipped; 0 unique of 0 records; exit 2"),
+    ]
     if args.container:
         command = base + ["--entrypoint", "python", args.container, "-P", "-c",
                          "import os,junit_evidence_gate; assert os.getuid()==10001; assert junit_evidence_gate.__file__.startswith('/app/'); print(os.getuid())"]
