@@ -65,6 +65,8 @@ junit-evidence-gate reports/unit.xml --format markdown --output evidence.md
 
 Markdown escapes testcase names, suite names, file paths, and check details so HTML, pipes, emphasis, code spans, and link-like text display literally. Newlines become line breaks inside a table cell. Test output and failure stack traces are omitted from summaries.
 
+For Unicode Markdown summaries and embedded text captures, see the [output encoding guide](docs/output-encoding.md).
+
 Default input limits are 5 MiB per file, 100,000 XML nodes per file, and a depth of 100. The CLI exposes `--max-bytes`; the Python API also accepts node and depth limits. XML stays local. An output file cannot overwrite an input report.
 
 ## GitHub Actions annotations
@@ -103,7 +105,9 @@ Generate the report with your existing runner, preserve its exit status, and run
 
 Install this package before these steps. `if: always()` makes missing evidence visible after an earlier failure. Keep the runner step in the job: it catches collection failures, interrupted runs, and errors that XML alone may omit.
 
-The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all eight fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.13.
+For a five-test example covering pytest report families, xfail, skips, and `unittest.TestCase`, see the [pytest report guide](docs/pytest.md).
+
+The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all eight fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.14.
 
 ## Build and verify distribution files
 
