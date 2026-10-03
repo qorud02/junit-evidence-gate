@@ -28,7 +28,7 @@ python -m pip install .
 junit-evidence-gate "reports/**/*.xml" --min-executed 20 --max-skipped 2
 ```
 
-Quote glob patterns so expansion behaves consistently across shells. Every supplied path or pattern must match a readable report. Repeating the same file path reads that file once.
+Existing literal paths take priority over glob expansion, including filenames containing brackets or other pattern characters. Quote glob patterns so expansion behaves consistently across shells. Every supplied path or pattern must match a readable report. Repeating the same file path reads that file once.
 
 ## What the gate checks
 
@@ -38,6 +38,7 @@ Quote glob patterns so expansion behaves consistently across shells. Every suppl
 | Suite totals | Compares `tests`, `failures`, `errors`, and `skipped` attributes with descendant testcase records. Missing totals are computed from records. |
 | Nested suites | Counts each testcase once. Parent totals cover all descendant testcases. |
 | Duplicate identities | Rejects repeated `(suite path, classname, name)` identities within or across reports. Duplicate records never increase the execution minimum. |
+| Misplaced results | Rejects result elements on suites or hidden inside metadata, without inventing testcase records. |
 | Failure and error | Rejects any recorded failure/error. Multiple failure elements in one testcase count as one failing testcase. |
 | Skip budget | Optional maximum count and ratio use unique testcase identities. |
 | Missing names and conflicts | Rejects blank testcase names, unknown status values, and contradictory skip/result declarations. |
@@ -106,7 +107,17 @@ Install this package before these steps. `if: always()` makes missing evidence v
 
 For a five-test example covering pytest report families, xfail, skips, and `unittest.TestCase`, see the [pytest report guide](docs/pytest.md).
 
-The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all seven fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.14.
+The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all eight fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.14.
+
+## Build and verify distribution files
+
+```sh
+python -m pip install build
+python -m build --outdir dist
+python scripts/verify_distribution.py dist
+```
+
+The verifier runs the tests and fixture demo from the extracted source archive, then installs the wheel into a temporary environment and checks the command outside the checkout. It writes `dist/SHA256SUMS` after those checks pass. The separate [distribution CI](.github/workflows/distribution.yml) retains the verified wheel, source archive, and checksums as a downloadable run artifact; it does not publish to a package registry.
 
 ## Python API
 

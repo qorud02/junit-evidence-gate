@@ -4,6 +4,8 @@ The gate accepts `testsuite` and `testsuites` roots, optional XML namespaces, ne
 
 Each suite's declared totals cover all descendant testcase records. Producers that declare direct-child totals on a parent suite should omit or normalize those parent attributes before checking. An unsupported structure is rejected with `evidence.structure`.
 
+Reserved result elements (`error`, `failure`, and `skipped`) must be direct children of a testcase. Results placed on suites or inside metadata are rejected with `evidence.structure`; they are not converted into testcase records. XML-looking text in escaped output or CDATA remains ordinary log text.
+
 Testcase result children have priority: `error`, then `failure`, then `skipped`. Multiple failure/error elements in a testcase count that testcase once for each respective declared suite measure. The summary gives a testcase with both an error and a failure the `error` status. A skip together with failure/error is contradictory and rejected.
 
 Supported `status` values are empty, `passed`, `pass`, `run`, `completed`, `failed`, `failure`, `error`, `skipped`, `skip`, `notrun`, and `disabled`, ignoring case. `run` and `completed` describe an attempted run and may accompany a result child. Unknown values reject the report. Testcase children may be `failure`, `error`, `skipped`, `properties`, `system-out`, and `system-err`. Other children, including `rerunFailure` and `flakyFailure`, reject the report with `evidence.unsupported_result`. Reduce extended retry formats to their selected final testcase records first.

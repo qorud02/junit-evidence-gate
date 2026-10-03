@@ -1,0 +1,4 @@
+<testsuite name="setup-error" tests="1">
+  <testcase name="passed-test"/>
+  <error message="suite setup failed"/>
+</testsuite>
