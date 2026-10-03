@@ -66,6 +66,20 @@ Markdown escapes testcase names, suite names, file paths, and check details so H
 
 Default input limits are 5 MiB per file, 100,000 XML nodes per file, and a depth of 100. The CLI exposes `--max-bytes`; the Python API also accepts node and depth limits. XML stays local. An output file cannot overwrite an input report.
 
+## GitHub Actions annotations
+
+With the checkout installed, print rejected checks directly into the Actions step log:
+
+```sh
+junit-evidence-gate report.xml --min-executed 20 --max-skipped 2 --format github
+```
+
+Each issue becomes an error annotation titled with its stable issue code. The source file points to the XML report when a check has a source. A notice includes the actual counts and exit code. The gate keeps the same `0`, `1`, and `2` exit meanings.
+
+For example, `examples/contradictory.xml` produces an `evidence.count_mismatch` error with `testsuite inflated declares tests=39; observed 1`, then exits `1`. GitHub parses these commands when they reach the step log; `--output annotations.txt` saves them to a file instead.
+
+The formatter escapes command delimiters in report names and details. Failure stack traces and captured test output remain omitted. See the [copyable workflow and Python API](docs/github-annotations.md) for setup and the output contract.
+
 ## Add to CI
 
 Generate the report with your existing runner, preserve its exit status, and run the gate in the same job:

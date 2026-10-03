@@ -29,6 +29,8 @@ jobs:
         run: python examples/run_demo.py
       - name: Check installed console command
         run: junit-evidence-gate examples/green.xml --min-executed 2 --max-skipped 1 --format markdown
+      - name: Check installed GitHub annotation output
+        run: junit-evidence-gate examples/green.xml --min-executed 2 --max-skipped 1 --format github
       - name: Check import outside checkout
         working-directory: ${{ runner.temp }}
         run: python -c "import junit_evidence_gate; print(junit_evidence_gate.__version__)"
