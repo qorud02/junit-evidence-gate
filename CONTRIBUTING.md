@@ -16,3 +16,5 @@ New parser support should include a passing report and a contradictory report, e
 Useful next contributions include real producer fixtures for Maven Surefire and Jest, a documented policy for retry formats, and a configurable identity selector with explicit duplicate semantics. Preserve the byte, depth, and node limits when changing XML handling.
 
 The runtime uses Python's standard library. Build tooling uses setuptools. Keep optional integrations separate from the core gate.
+
+When changing GitHub annotation output, add command-boundary tests for percent signs, CR/LF, colons, commas, and XML-provided names. Keep each annotation on one physical output line and preserve JSON schema version 1, Markdown output, and CLI exit codes. The [annotation contract](docs/github-annotations.md) links the runner protocol and encoding reference.

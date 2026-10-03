@@ -1,4 +1,4 @@
-"""CLI with machine-readable results and literal-safe Markdown summaries."""
+"""CLI with JSON, literal-safe Markdown, and GitHub Actions annotations."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import sys
 
 from . import __version__
 from .core import Issue, Policy, Report, inspect_reports
+from .github import render_github
 
 
 def markdown_literal(value: str) -> str:
@@ -50,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-skipped", type=int)
     parser.add_argument("--max-skip-ratio", type=float)
     parser.add_argument("--max-bytes", type=int, default=5 * 1024 * 1024)
-    parser.add_argument("--format", choices=("json", "markdown"), default="json")
+    parser.add_argument("--format", choices=("json", "markdown", "github"), default="json")
     parser.add_argument("--output", type=Path, help="Write the same summary to this path instead of stdout")
     args = parser.parse_args(argv)
     try:
@@ -70,7 +71,12 @@ def main(argv: list[str] | None = None) -> int:
             unmatched.append(pattern)
     report = inspect_reports(paths, policy)
     report.issues.extend(Issue("input.unmatched", "Path or glob pattern matched no files", pattern) for pattern in unmatched)
-    content = render_markdown(report) if args.format == "markdown" else json.dumps(report.to_dict(), ensure_ascii=True, indent=2) + "\n"
+    if args.format == "github":
+        content = render_github(report)
+    elif args.format == "markdown":
+        content = render_markdown(report)
+    else:
+        content = json.dumps(report.to_dict(), ensure_ascii=True, indent=2) + "\n"
     if args.output:
         try:
             resolved_output = args.output.resolve()
