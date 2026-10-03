@@ -200,12 +200,17 @@ def _collect(root: ET.Element, source: str, issues: list[Issue]) -> list[Case]:
                 issues.append(Issue("evidence.structure", "A testcase must be a direct child of a testsuite", source))
             if any(_local(child.tag) in {"testcase", "testsuite", "testsuites"} for child in node.iter() if child is not node):
                 issues.append(Issue("evidence.structure", "A testcase contains a nested test container", source))
+            if any(
+                _local(desc.tag) in {"error", "failure", "skipped"}
+                for child in node for desc in child.iter() if desc is not child
+            ):
+                issues.append(Issue("evidence.structure", "A testcase result must be a direct child of its testcase", source))
             case = _case(node, source, suite, issues)
             cases.append(case)
             return [case]
         if tag not in {"testsuite", "testsuites"}:
-            if any(_local(desc.tag) in {"testcase", "testsuite", "testsuites"} for desc in node.iter()):
-                issues.append(Issue("evidence.structure", "A test container appears inside report metadata", source))
+            if any(_local(desc.tag) in {"testcase", "testsuite", "testsuites", "error", "failure", "skipped"} for desc in node.iter()):
+                issues.append(Issue("evidence.structure", "A test container or result appears outside its supported parent", source))
             return []
         path = suite + (node.get("name", "(unnamed)"),) if tag == "testsuite" else suite
         descendants: list[Case] = []
