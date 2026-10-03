@@ -89,7 +89,17 @@ def main(argv: list[str] | None = None) -> int:
             return 2
     else:
         try:
-            sys.stdout.write(content)
+            if args.format == "github" and hasattr(sys.stdout, "buffer"):
+                # Actions commands are UTF-8, including under Windows legacy code pages.
+                sys.stdout.buffer.write(content.encode("utf-8"))
+                sys.stdout.buffer.flush()
+            else:
+                # StringIO capture and existing JSON/Markdown text output stay supported.
+                sys.stdout.write(content)
         except BrokenPipeError:
+            return 2
+        except UnicodeError:
+            if args.format != "github":
+                raise
             return 2
     return report.exit_code

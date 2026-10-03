@@ -1,8 +1,11 @@
 from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -231,6 +234,39 @@ class GitHubFormatTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("report%2Cnight.xml", output)
         self.assertEqual(self.commands(output)[0][1]["file"], str(path))
+
+    def test_real_cli_uses_utf8_under_cp949_for_xml_names_and_source_paths(self):
+        path = self.xml(
+            '<testsuite name="suite 👋&#10;::notice::suite">'
+            '<testcase name="한글 👋&#13;&#10;::error::forged%0A"/>'
+            '<testcase name="한글 👋&#13;&#10;::error::forged%0A"/></testsuite>',
+            "emoji-👋,unit.xml",
+        )
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "cp949"
+        run = subprocess.run([sys.executable, "-m", "junit_evidence_gate", str(path), "--format", "github"],
+                             cwd=ROOT, env=env, capture_output=True, timeout=60)
+        self.assertEqual(run.returncode, 1, run.stderr)
+        self.assertEqual(run.stderr, b"")
+        content = run.stdout.decode("utf-8")
+        self.assertIn("한글 👋%0D%0A::error::forged%250A", content)
+        self.assertIn("emoji-👋%2Cunit.xml", content)
+        commands = self.commands(content)
+        self.assertEqual(len(commands), 2)
+        self.assertEqual(commands[0][1]["file"], str(path))
+        self.assertEqual(commands[0][2], inspect_reports([path]).issues[0].message)
+
+    def test_real_cli_output_file_remains_utf8_under_cp949(self):
+        path = self.xml('<testsuite name="한글 👋" tests="2"><testcase name="one"/></testsuite>', "emoji-👋.xml")
+        target = self.folder / "annotations-👋.txt"
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "cp949"
+        run = subprocess.run([sys.executable, "-m", "junit_evidence_gate", str(path), "--format", "github", "--output", str(target)],
+                             cwd=ROOT, env=env, capture_output=True, timeout=60)
+        self.assertEqual((run.returncode, run.stdout, run.stderr), (1, b"", b""))
+        content = target.read_text(encoding="utf-8")
+        self.assertIn("한글 👋", content)
+        self.assertEqual(self.commands(content)[0][1]["file"], str(path))
 
 
 if __name__ == "__main__":

@@ -57,6 +57,8 @@ Use an execution minimum and skip budget that fit your project. `if: always()` e
 
 Use stdout for annotations. Saving commands with `--output` creates a text file; it does not display annotations until the commands are printed into a step log. Keep JSON or Markdown as a separate artifact when you need the full structured records or table.
 
+The CLI writes GitHub commands as UTF-8, including when Windows uses a legacy output encoding such as cp949. `--output` files also use UTF-8, so Unicode names and paths keep their characters.
+
 ## Output contract
 
 - Each `Report.issues` entry produces one `::error` command. Its title contains the stable issue code and its message contains the existing check detail.
@@ -76,7 +78,7 @@ import sys
 from junit_evidence_gate import Policy, inspect_reports, render_github
 
 report = inspect_reports(["report.xml"], Policy(min_executed=20, max_skipped=2))
-sys.stdout.write(render_github(report))
+sys.stdout.buffer.write(render_github(report).encode("utf-8"))
 raise SystemExit(report.exit_code)
 ```
 
