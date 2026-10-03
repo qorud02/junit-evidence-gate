@@ -25,6 +25,7 @@ def verify(dist):
     if len(wheels) != 1 or len(sdists) != 1:
         raise ValueError("Expected exactly one wheel and one source archive")
     wheel, sdist = wheels[0].resolve(), sdists[0].resolve()
+    checksums = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (wheel, sdist)}
     with tempfile.TemporaryDirectory(prefix="junit-dist-") as temporary:
         temp = Path(temporary)
         with tarfile.open(sdist) as archive:
@@ -86,6 +87,10 @@ def verify(dist):
             ):
                 raise ValueError("Installed CLI lost the result-structure guard")
             checks.append({"fixture": fixture, "exit_code": result.returncode})
+        (dist / "SHA256SUMS").write_text(
+            "".join(f"{digest}  {name}\n" for name, digest in sorted(checksums.items())),
+            encoding="utf-8",
+        )
         print(json.dumps({
             "wheel": wheel.name, "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
             "sdist": sdist.name, "sdist_sha256": hashlib.sha256(sdist.read_bytes()).hexdigest(),

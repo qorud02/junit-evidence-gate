@@ -91,6 +91,16 @@ Install this package before these steps. `if: always()` makes missing evidence v
 
 The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all eight fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.13.
 
+## Build and verify distribution files
+
+```sh
+python -m pip install build
+python -m build --outdir dist
+python scripts/verify_distribution.py dist
+```
+
+The verifier runs the tests and fixture demo from the extracted source archive, then installs the wheel into a temporary environment and checks the command outside the checkout. It writes `dist/SHA256SUMS` after those checks pass. The separate [distribution CI](.github/workflows/distribution.yml) retains the verified wheel, source archive, and checksums as a downloadable run artifact; it does not publish to a package registry.
+
 ## Python API
 
 ```python
