@@ -60,17 +60,17 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
         fixture = lambda name: str(root / "examples" / name)
         extra = lambda name: str(temp / name)
 
-    def run(arguments, expected, label, report=True, github=False):
+    def run(arguments, expected, label, report=True, legacy_encoding=False):
         command_prefix = prefix
         command_env = clean_env
-        if github:
+        if legacy_encoding:
             command_env = dict(clean_env, PYTHONIOENCODING="cp949")
             if args.container:
                 command_prefix = base + ["--env", "PYTHONIOENCODING=cp949", args.container]
         result = subprocess.run(command_prefix + arguments, cwd=temp, env=command_env,
                                 capture_output=True, text=True, encoding="utf-8", timeout=180)
         assert result.returncode == expected, (label, expected, result.returncode, result.stdout, result.stderr)
-        if github:
+        if legacy_encoding:
             assert result.stderr == "", (label, result.stderr)
         checks.append(label)
         return json.loads(result.stdout) if report else result.stdout
@@ -117,11 +117,11 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
     run([fixture("green.xml"), "--min-executed", "-1"], 2, "invalid-policy", False)
 
     github_green = commands(run([fixture("green.xml"), "--format", "github"], 0,
-                                "github-success-under-legacy-encoding", False, github=True))
+                                "github-success-under-legacy-encoding", False, legacy_encoding=True))
     assert github_green == [("notice", {"title": "JUnit evidence: PASS"},
                              "2 executed; 2 passed; 0 failed; 0 errors; 1 skipped; 3 unique of 3 records; exit 0")]
     github_rejection = commands(run([fixture("contradictory.xml"), "--format", "github"], 1,
-                                    "github-rejection-counts-and-source", False, github=True))
+                                    "github-rejection-counts-and-source", False, legacy_encoding=True))
     assert github_rejection == [
         ("error", {"title": "JUnit evidence: evidence.count_mismatch", "file": fixture("contradictory.xml")},
          "testsuite inflated declares tests=39; observed 1"),
@@ -129,7 +129,7 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
          "1 executed; 1 passed; 0 failed; 0 errors; 0 skipped; 1 unique of 1 records; exit 1"),
     ]
     github_malformed = commands(run([extra("malformed.xml"), "--format", "github"], 2,
-                                    "github-input-error-counts-and-source", False, github=True))
+                                    "github-input-error-counts-and-source", False, legacy_encoding=True))
     assert github_malformed == [
         ("error", {"title": "JUnit evidence: input.invalid_xml", "file": extra("malformed.xml")},
          "Malformed or unsupported XML encoding"),
@@ -139,7 +139,7 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
          "0 executed; 0 passed; 0 failed; 0 errors; 0 skipped; 0 unique of 0 records; exit 2"),
     ]
     unsafe_commands = run([extra(injection_name), "--format", "github"], 1,
-                          "github-unicode-xml-command-boundary", False, github=True)
+                          "github-unicode-xml-command-boundary", False, legacy_encoding=True)
     assert "한글 👋%0D%0A::error::forged%250A" in unsafe_commands, unsafe_commands
     assert "github-👋%2C%250A-case.xml" in unsafe_commands, unsafe_commands
     assert commands(unsafe_commands) == [
@@ -150,7 +150,7 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
     ]
     missing_name = "missing:👋,%0A.xml"
     unmatched = run([missing_name, "--format", "github"], 2,
-                    "github-unmatched-path-property-escaping", False, github=True)
+                    "github-unmatched-path-property-escaping", False, legacy_encoding=True)
     assert "file=missing%3A👋%2C%250A.xml" in unmatched, unmatched
     assert commands(unmatched) == [
         ("error", {"title": "JUnit evidence: input.missing"}, "No report files supplied"),
@@ -161,6 +161,15 @@ with tempfile.TemporaryDirectory(prefix="junit-package-smoke-") as directory:
         ("notice", {"title": "JUnit evidence: REJECT"},
          "0 executed; 0 passed; 0 failed; 0 errors; 0 skipped; 0 unique of 0 records; exit 2"),
     ]
+    markdown_legacy = run([extra(injection_name), "--format", "markdown"], 1,
+                          "markdown-unicode-under-legacy-encoding", False, legacy_encoding=True)
+    assert markdown_legacy.startswith("# JUnit evidence: REJECT\n"), markdown_legacy
+    for row in markdown_legacy.splitlines()[-2:]:
+        assert row.count("|") == 5, row
+        cells = [html.unescape(cell.strip().replace("<br>", "\n")) for cell in row.split("|")[1:-1]]
+        assert cells == [injection_suite, "", injection_case.replace("\r\n", "\n"), "passed"], cells
+    duplicate = next(row for row in markdown_legacy.splitlines() if "evidence&#46;duplicate" in row)
+    assert html.unescape(duplicate.split("|")[-2].strip()) == extra(injection_name), duplicate
     if args.container:
         command = base + ["--entrypoint", "python", args.container, "-P", "-c",
                          "import os,junit_evidence_gate; assert os.getuid()==10001; assert junit_evidence_gate.__file__.startswith('/app/'); print(os.getuid())"]

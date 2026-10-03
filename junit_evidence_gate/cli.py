@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import io
 import json
 from pathlib import Path
 import string
@@ -41,6 +42,30 @@ def render_markdown(report: Report) -> str:
         cells = (" / ".join(case.suite), case.classname, case.name, case.status)
         lines.append("| " + " | ".join(markdown_literal(cell) for cell in cells) + " |")
     return "\n".join(lines) + "\n"
+
+
+def _write_stdout(content: str, format_name: str) -> None:
+    stream = sys.stdout
+    if format_name == "github" and hasattr(stream, "buffer"):
+        # Keep Actions commands as UTF-8 bytes with their original LF boundaries.
+        stream.buffer.write(content.encode("utf-8"))
+        stream.buffer.flush()
+    elif format_name == "markdown" and isinstance(stream, io.TextIOWrapper):
+        # Keep newline handling and restore an embedded caller's stream settings.
+        encoding, errors = stream.encoding, stream.errors
+        try:
+            stream.reconfigure(encoding="utf-8", errors=errors)
+        except io.UnsupportedOperation:
+            # A read/write capture may have read data and keep its current codec.
+            stream.write(content)
+            return
+        try:
+            stream.write(content)
+        finally:
+            stream.reconfigure(encoding=encoding, errors=errors)
+    else:
+        # JSON ASCII escapes and custom text captures keep their existing writer.
+        stream.write(content)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -89,17 +114,9 @@ def main(argv: list[str] | None = None) -> int:
             return 2
     else:
         try:
-            if args.format == "github" and hasattr(sys.stdout, "buffer"):
-                # Actions commands are UTF-8, including under Windows legacy code pages.
-                sys.stdout.buffer.write(content.encode("utf-8"))
-                sys.stdout.buffer.flush()
-            else:
-                # StringIO capture and existing JSON/Markdown text output stay supported.
-                sys.stdout.write(content)
+            _write_stdout(content, args.format)
         except BrokenPipeError:
             return 2
-        except UnicodeError:
-            if args.format != "github":
-                raise
+        except (OSError, UnicodeError):
             return 2
     return report.exit_code
