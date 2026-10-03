@@ -14,6 +14,7 @@ expectations = {
     "duplicate.xml": (1, 1),
     "failed.xml": (1, 2),
     "literal-names.xml": (0, 1),
+    "suite-error.xml": (1, 1),
 }
 results = []
 for fixture, (exit_code, executed) in expectations.items():
