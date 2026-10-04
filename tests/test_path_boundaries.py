@@ -42,6 +42,12 @@ class PathBoundaryTests(unittest.TestCase):
         self.assertEqual(report.exit_code, 2)
         self.assertIn("input.unreadable", {issue.code for issue in report.issues})
 
+    def test_cyclic_literal_input_returns_unreadable_issue(self):
+        path = self.loop("loop.xml")
+        code, output, errors = self.cli(path)
+        self.assertEqual((code, errors), (2, ""))
+        self.assertIn("input.unreadable", {issue["code"] for issue in json.loads(output)["issues"]})
+
     def test_cyclic_glob_match_returns_json_rejection(self):
         path = self.loop("loop.xml")
         code, output, errors = self.cli(self.folder / "*.xml")
