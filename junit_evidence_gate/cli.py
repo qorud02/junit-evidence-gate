@@ -86,7 +86,12 @@ def main(argv: list[str] | None = None) -> int:
     paths: list[str] = []
     unmatched: list[str] = []
     for pattern in args.reports:
-        if Path(pattern).exists():
+        try:
+            literal_exists = Path(pattern).exists()
+        except OSError:
+            # A valid glob can exceed the filesystem's literal name limit.
+            literal_exists = False
+        if literal_exists:
             paths.append(pattern)
             continue
         matches = sorted(glob.glob(pattern, recursive=True))
@@ -109,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("Output path must differ from every input report", file=sys.stderr)
                 return 2
             args.output.write_text(content, encoding="utf-8")
-        except (OSError, ValueError):
+        except (OSError, ValueError, RuntimeError):
             print("Summary output cannot be written", file=sys.stderr)
             return 2
     else:
