@@ -1,6 +1,7 @@
 graft examples
 graft docs
 include CONTRIBUTING.md
+include .gitattributes
 include scripts/verify_distribution.py
 include integrations/jest/package.json
 include integrations/jest/package-lock.json

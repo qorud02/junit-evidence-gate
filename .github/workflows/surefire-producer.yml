@@ -3,6 +3,7 @@ name: Surefire producer compatibility
 on:
   push:
     paths:
+      - '.gitattributes'
       - 'junit_evidence_gate/**'
       - 'integrations/surefire/**'
       - 'examples/producers/surefire/**'
@@ -10,6 +11,7 @@ on:
       - '.github/workflows/surefire-producer.yml'
   pull_request:
     paths:
+      - '.gitattributes'
       - 'junit_evidence_gate/**'
       - 'integrations/surefire/**'
       - 'examples/producers/surefire/**'
