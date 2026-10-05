@@ -1,0 +1,2 @@
+# Producer fixtures are canonical serialized XML, compared byte-for-byte.
+examples/producers/**/*.xml text eol=lf

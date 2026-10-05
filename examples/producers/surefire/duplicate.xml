@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="fixtures.PassingTest" tests="4" errors="0" skipped="1" failures="0" flakes="0">
+  <testcase name="addsWholeNumbers" classname="fixtures.PassingTest" />
+  <testcase name="addsWholeNumbers" classname="fixtures.PassingTest" />
+  <testcase name="keepsZeroPrefixedIdentifier" classname="fixtures.PassingTest" />
+  <testcase name="optionalRemoteCheck" classname="fixtures.PassingTest">
+    <skipped message="Synthetic optional check" />
+  </testcase>
+</testsuite>

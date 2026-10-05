@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="junit-evidence-gate synthetic Jest fixtures" tests="2" failures="1" errors="0">
+  <testsuite name="failing.test.js" errors="0" failures="1" skipped="0" tests="2">
+    <testcase classname="invalid output rejects a wrong total" name="invalid output rejects a wrong total">
+      <failure />
+    </testcase>
+    <testcase classname="invalid output continues independent checks" name="invalid output continues independent checks">
+    </testcase>
+  </testsuite>
+</testsuites>

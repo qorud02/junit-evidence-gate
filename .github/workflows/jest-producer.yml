@@ -1,0 +1,54 @@
+name: Jest producer compatibility
+
+on:
+  push:
+    paths:
+      - '.gitattributes'
+      - 'junit_evidence_gate/**'
+      - 'integrations/jest/**'
+      - 'examples/producers/jest/**'
+      - 'tests/test_jest_reports.py'
+      - '.github/workflows/jest-producer.yml'
+  pull_request:
+    paths:
+      - '.gitattributes'
+      - 'junit_evidence_gate/**'
+      - 'integrations/jest/**'
+      - 'examples/producers/jest/**'
+      - 'tests/test_jest_reports.py'
+      - '.github/workflows/jest-producer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  producer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install pinned producer dependencies without lifecycle scripts
+        working-directory: integrations/jest
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify real producer reports against committed fixtures
+        run: python integrations/jest/run.py --keep-reports integrations/jest/generated
+      - name: Check fixture policy and CLI regressions
+        run: python -m unittest discover -s tests -p test_jest_reports.py -v
+      - name: Retain synthetic producer reports and runner logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: jest-producer-reports
+          path: |
+            integrations/jest/generated/*.xml
+            integrations/jest/generated/*.log
+          if-no-files-found: warn
+          retention-days: 7
