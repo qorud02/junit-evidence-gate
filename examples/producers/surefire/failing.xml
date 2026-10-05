@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="fixtures.FailingTest" tests="3" errors="1" skipped="0" failures="1" flakes="0">
+  <testcase name="continuesIndependentChecks" classname="fixtures.FailingTest" />
+  <testcase name="recordsUnexpectedErrors" classname="fixtures.FailingTest">
+    <error message="Synthetic producer error" type="java.lang.IllegalStateException" />
+  </testcase>
+  <testcase name="rejectsWrongTotal" classname="fixtures.FailingTest">
+    <failure message="expected: &lt;5&gt; but was: &lt;4&gt;" type="org.opentest4j.AssertionFailedError" />
+  </testcase>
+</testsuite>

@@ -6,3 +6,7 @@ build/
 dist/
 .coverage
 verification/
+node_modules/
+integrations/jest/generated/
+integrations/surefire/target/
+integrations/surefire/generated/
