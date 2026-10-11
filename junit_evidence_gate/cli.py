@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import glob
 import io
 import json
@@ -68,6 +69,45 @@ def _write_stdout(content: str, format_name: str) -> None:
         stream.write(content)
 
 
+def _allows_glob(exc: OSError) -> bool:
+    # Windows maps both invalid names (123) and symlink loops (1921) to EINVAL.
+    return (
+        exc.errno in {errno.ENOENT, errno.ENOTDIR, errno.ENAMETOOLONG}
+        or (exc.errno == errno.EINVAL and getattr(exc, "winerror", None) in {None, 123})
+    )
+
+
+def _literal_input(path: Path) -> bool:
+    try:
+        # Keep directory entries even when their symlink target is missing.
+        path.lstat()
+    except ValueError:
+        pass
+    except OSError as exc:
+        if not _allows_glob(exc):
+            return True
+    else:
+        return True
+    # Windows can report a missing child beneath a cyclic symlink parent.
+    # Check the nearest literal ancestor before allowing glob substitution,
+    # including overlong Windows paths that raise ValueError.
+    for parent in path.parents:
+        try:
+            parent.lstat()
+        except ValueError:
+            continue
+        except OSError as parent_exc:
+            if not _allows_glob(parent_exc):
+                return True
+        else:
+            try:
+                parent.stat()
+            except (OSError, ValueError):
+                return True
+            break
+    return False
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Reject empty, contradictory, duplicate, or failing JUnit evidence.")
     parser.add_argument("reports", nargs="+", help="XML paths or quoted glob patterns; each pattern must match")
@@ -86,12 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     paths: list[str] = []
     unmatched: list[str] = []
     for pattern in args.reports:
-        try:
-            literal_exists = Path(pattern).exists()
-        except OSError:
-            # A valid glob can exceed the filesystem's literal name limit.
-            literal_exists = False
-        if literal_exists:
+        if _literal_input(Path(pattern)):
             paths.append(pattern)
             continue
         matches = sorted(glob.glob(pattern, recursive=True))
