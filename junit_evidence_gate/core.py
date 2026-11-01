@@ -245,10 +245,14 @@ def inspect_reports(paths: list[str | Path], policy: Policy | None = None) -> Re
         path = Path(raw)
         try:
             resolved = path.resolve()
-            if resolved in seen_files:
-                continue
-            seen_files.add(resolved)
-            report.files.append(str(path))
+        except (OSError, ValueError, RuntimeError):
+            report.issues.append(Issue("input.unreadable", "Report file cannot be read", str(path)))
+            continue
+        if resolved in seen_files:
+            continue
+        seen_files.add(resolved)
+        report.files.append(str(path))
+        try:
             root = _read_file(path, report.policy)
         except UnsafeXML as exc:
             report.issues.append(Issue("input.unsafe_xml", str(exc), str(path)))
