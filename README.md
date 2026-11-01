@@ -105,7 +105,7 @@ Generate the report with your existing runner, preserve its exit status, and run
 
 Install this package before these steps. `if: always()` makes missing evidence visible after an earlier failure. Keep the runner step in the job: it catches collection failures, interrupted runs, and errors that XML alone may omit.
 
-For a five-test example covering pytest report families, xfail, skips, and `unittest.TestCase`, see the [pytest report guide](docs/pytest.md).
+For a five-test example covering pytest report families, xfail, skips, and `unittest.TestCase`, see the [pytest report guide](docs/pytest.md). The [Jest report guide](docs/jest.md) includes pinned real-producer fixtures, a reproducible optional integration, and observed TODO/module-loading inconsistencies. The [Maven Surefire guide](docs/surefire.md) covers Java passes, failures, errors, skips, parameterized invocations, and strict retry/duplicate/count checks.
 
 The repository's own [CI definition](.github/workflows/ci.yml) installs the package, runs the unit and CLI tests, exercises all eight fixtures, and checks the installed command on Windows and Linux with Python 3.10–3.14.
 

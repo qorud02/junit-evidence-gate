@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="fixtures.RetryFailureTest" tests="2" errors="1" skipped="0" failures="1" flakes="0">
+  <testcase name="stillErrorsAfterRetry" classname="fixtures.RetryFailureTest">
+    <error message="Synthetic repeated error" type="java.lang.IllegalStateException" />
+    <rerunError message="Synthetic repeated error" type="java.lang.IllegalStateException">
+      <stackTrace />
+    </rerunError>
+  </testcase>
+  <testcase name="stillFailsAfterRetry" classname="fixtures.RetryFailureTest">
+    <failure message="Synthetic repeated failure" type="org.opentest4j.AssertionFailedError" />
+    <rerunFailure message="Synthetic repeated failure" type="org.opentest4j.AssertionFailedError">
+      <stackTrace />
+    </rerunFailure>
+  </testcase>
+</testsuite>

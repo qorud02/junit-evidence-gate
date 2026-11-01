@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="junit-evidence-gate synthetic Jest fixtures" tests="3" failures="0" errors="0">
+  <testsuite name="passing.test.js" errors="0" failures="0" skipped="1" tests="3">
+    <testcase classname="integer values adds whole numbers" name="integer values adds whole numbers">
+    </testcase>
+    <testcase classname="integer values preserves a zero-prefixed identifier" name="integer values preserves a zero-prefixed identifier">
+    </testcase>
+    <testcase classname="integer values optional remote check" name="integer values optional remote check">
+      <skipped />
+    </testcase>
+  </testsuite>
+</testsuites>

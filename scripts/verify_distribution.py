@@ -72,6 +72,18 @@ def verify(dist):
         checks = []
         for fixture, expected in (
             ("green.xml", 0), ("contradictory.xml", 1), ("suite-error.xml", 1),
+            ("producers/jest/passing.xml", 0),
+            ("producers/jest/failing.xml", 1),
+            ("producers/jest/todo.xml", 1),
+            ("producers/jest/suite-error.xml", 1),
+            ("producers/jest/contradictory.xml", 1),
+            ("producers/surefire/passing.xml", 0),
+            ("producers/surefire/failing.xml", 1),
+            ("producers/surefire/parameterized.xml", 0),
+            ("producers/surefire/contradictory.xml", 1),
+            ("producers/surefire/duplicate.xml", 1),
+            ("producers/surefire/flaky.xml", 1),
+            ("producers/surefire/retry-failure.xml", 1),
         ):
             result = subprocess.run(
                 [str(command), str(source / "examples" / fixture)], cwd=temp,
@@ -86,6 +98,24 @@ def verify(dist):
                 issue["code"] == "evidence.structure" for issue in report["issues"]
             ):
                 raise ValueError("Installed CLI lost the result-structure guard")
+            expected_issues = {
+                "producers/jest/passing.xml": set(),
+                "producers/jest/failing.xml": {"policy.failed"},
+                "producers/jest/todo.xml": {"evidence.count_mismatch"},
+                "producers/jest/suite-error.xml": {"evidence.count_mismatch", "evidence.duplicate", "policy.failed"},
+                "producers/jest/contradictory.xml": {"evidence.count_mismatch"},
+                "producers/surefire/passing.xml": set(),
+                "producers/surefire/failing.xml": {"policy.failed"},
+                "producers/surefire/parameterized.xml": set(),
+                "producers/surefire/contradictory.xml": {"evidence.count_mismatch"},
+                "producers/surefire/duplicate.xml": {"evidence.duplicate"},
+                "producers/surefire/flaky.xml": {"evidence.unsupported_result"},
+                "producers/surefire/retry-failure.xml": {"evidence.unsupported_result", "policy.failed"},
+            }
+            if fixture in expected_issues and {
+                issue["code"] for issue in report["issues"]
+            } != expected_issues[fixture]:
+                raise ValueError(f"{fixture}: installed CLI changed expected issue codes")
             checks.append({"fixture": fixture, "exit_code": result.returncode})
         (dist / "SHA256SUMS").write_text(
             "".join(f"{digest}  {name}\n" for name, digest in sorted(checksums.items())),

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="junit-evidence-gate synthetic Jest fixtures" tests="1" failures="0" errors="0">
+  <testsuite name="todo.test.js" errors="0" failures="0" skipped="0" tests="1">
+    <testcase classname="unfinished checks has one completed check" name="unfinished checks has one completed check">
+    </testcase>
+    <testcase classname="unfinished checks future producer check" name="unfinished checks future producer check">
+    </testcase>
+  </testsuite>
+</testsuites>

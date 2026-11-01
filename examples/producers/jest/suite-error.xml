@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="junit-evidence-gate synthetic Jest fixtures" tests="0" failures="0" errors="1">
+  <testsuite name="cases/suite-error.test.js" errors="1" failures="0" skipped="0" tests="0">
+    <testcase classname="Test suite failed to run" name="cases/suite-error.test.js">
+      <error />
+    </testcase>
+    <testcase classname="Test suite failed to run" name="cases/suite-error.test.js">
+      <failure />
+    </testcase>
+  </testsuite>
+</testsuites>
